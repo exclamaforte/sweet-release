@@ -14,7 +14,9 @@ classes = {
     'u': 'bug fixes',
     'p': 'performance',
     'd': 'documentation',
-    'e': 'developers'
+    'e': 'developers',
+    'N': 'not user facing',
+    'T': 'Untopiced (not relevant to inductor)'
     # Add new classes here, e.g., 'n': 'New Class'
 }
 
