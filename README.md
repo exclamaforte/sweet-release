@@ -1,5 +1,5 @@
 # sweet-release
-A script to process release notes for PyTorch.
+A script to reduce the friction of manually processing release notes for PyTorch.
 
 ## Usage
 ```shell
