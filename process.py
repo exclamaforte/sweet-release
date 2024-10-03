@@ -29,7 +29,7 @@ def rlinput(prompt, prefill=''):
 
 def remove_square(line):
     # Remove anything at the start that is contained within square brackets
-    return re.sub(r'^\[.*?\]\s*', '', line)
+    return re.sub(r'\[.*?\]\s*', '', line)
 
 def process_line(line):
     # Find the issue numbers
