@@ -1,5 +1,5 @@
 # sweet-release
-My script to process release notes for PyTorch.
+A script to process release notes for PyTorch.
 
 ## Usage
 ```shell
