@@ -4,7 +4,7 @@ import readline
 import tempfile
 import subprocess
 import sys
-
+import os
 # Predefined classes with their corresponding single letter hotkeys
 classes = {
     'b': 'bc breaking',
@@ -13,19 +13,12 @@ classes = {
     'i': 'improvements',
     'u': 'bug fixes',
     'p': 'performance',
-    'd': 'documentation',
+    'D': 'documentation',
     'e': 'developers',
     'N': 'not user facing',
     'T': 'Untopiced (not relevant to inductor)'
     # Add new classes here, e.g., 'n': 'New Class'
 }
-
-def rlinput(prompt, prefill=''):
-   readline.set_startup_hook(lambda: readline.insert_text(prefill))
-   try:
-      return input(prompt)  # or raw_input in Python 2
-   finally:
-      readline.set_startup_hook()
 
 def remove_square(line):
     # Remove anything at the start that is contained within square brackets
@@ -44,8 +37,8 @@ def get_class():
         print(f"{hotkey}: {class_name}")
     while True:
         choice = input("> ").lower()
-        if choice in classes:
-            return classes[choice]
+        if choice.upper() in classes:
+            return classes[choice.upper()]
         else:
             print("Invalid choice. Please try again.")
 
@@ -64,6 +57,19 @@ def save_to_file(file_name, data):
             for line in lines:
                 f.write(f" - {line}\n")
 
+def load_from_file(file_name):
+    data = {}
+    current_class = None
+    with open(file_name, 'r') as f:
+        for line in f.readlines():
+            line = line.strip()
+            if line.startswith('#'):
+                current_class = line[2:]
+                data[current_class] = []
+            elif line.startswith('-'):
+                data[current_class].append(line[3:])
+    return data
+
 def main():
     import argparse
     parser = argparse.ArgumentParser(description='Process commits')
@@ -75,15 +81,36 @@ def main():
         args.input_file = input("Enter a file name containing the list of commits: ")
     if not args.output_file:
         args.output_file = input("Enter an output file name: ")
+    resume = False
+    if os.path.exists(args.output_file):
+        response = input(f"Output file '{args.output_file}' already exists. Do you want to resume from it? (y/n): ")
+        if response.lower() == 'y':
+            resume = True
+    if resume:
+        try:
+            data = load_from_file(args.output_file)
+        except Exception as e:
+            print(f"Error loading from file: {e}")
+            return
+    else:
+        data = {class_name: [] for class_name in classes.values()}
     try:
         with open(args.input_file, 'r') as f:
             commits = [line.strip() for line in f.readlines()]
     except FileNotFoundError:
         print("File not found.")
         return
-    data = {class_name: [] for class_name in classes.values()}
+    existing_issue_numbers = set()
+    for lines in data.values():
+        for line in lines:
+            issue_numbers = re.findall(r'\(#(\d+)\)', line)
+            existing_issue_numbers.update(issue_numbers)
     for line in commits:
         processed_line, issue_numbers = process_line(line)
+        if any(issue_number in existing_issue_numbers for issue_number in issue_numbers):
+            response = input(f"Issue number(s) {', '.join(issue_numbers)} already exist in the output file. Do you want to skip this line? (y/n): ")
+            if response.lower() == 'y':
+                continue
         # Open the issue number link in the system default browser
         for issue_number in issue_numbers:
             url = f"https://github.com/pytorch/pytorch/pull/{issue_number}"
@@ -98,7 +125,10 @@ def main():
         links = ' '.join(f"([#{issue_number}](https://github.com/pytorch/pytorch/pull/{issue_number}))" for issue_number in issue_numbers)
         final_line = f"{rewritten_line} {links}"
         # Save the file state to the output file every iteration
+        if class_name not in data:
+            data[class_name] = []
         data[class_name].append(final_line)
         save_to_file(args.output_file, data)
+
 if __name__ == "__main__":
     main()
