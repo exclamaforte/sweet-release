@@ -67,7 +67,7 @@ def load_from_file(file_name):
                 current_class = line[2:]
                 data[current_class] = []
             elif line.startswith('-'):
-                data[current_class].append(line[3:])
+                data[current_class].append(line[2:])
     return data
 
 def main():
