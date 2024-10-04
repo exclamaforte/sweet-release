@@ -36,9 +36,9 @@ def get_class():
     for hotkey, class_name in classes.items():
         print(f"{hotkey}: {class_name}")
     while True:
-        choice = input("> ").lower()
-        if choice.upper() in classes:
-            return classes[choice.upper()]
+        choice = input("> ")
+        if choice in classes:
+            return classes[choice]
         else:
             print("Invalid choice. Please try again.")
 
@@ -76,6 +76,7 @@ def main():
     parser.add_argument('input_file', nargs='?', help='Input file containing the list of commits')
     parser.add_argument('output_file', nargs='?', help='Output file name')
     parser.add_argument('-e', '--editor', default='vim', help='Editor to use for rewriting commit messages')
+    parser.add_argument('-s', '--skip', help='Whether or not to skip ', action=argparse.BooleanOptionalAction)
     args = parser.parse_args()
     if not args.input_file:
         args.input_file = input("Enter a file name containing the list of commits: ")
@@ -103,11 +104,13 @@ def main():
     existing_issue_numbers = set()
     for lines in data.values():
         for line in lines:
-            issue_numbers = re.findall(r'\(#(\d+)\)', line)
+            issue_numbers = re.findall(r'\[#(\d+)\]', line)
             existing_issue_numbers.update(issue_numbers)
     for line in commits:
         processed_line, issue_numbers = process_line(line)
         if any(issue_number in existing_issue_numbers for issue_number in issue_numbers):
+            if args.skip:
+                continue
             response = input(f"Issue number(s) {', '.join(issue_numbers)} already exist in the output file. Do you want to skip this line? (y/n): ")
             if response.lower() == 'y':
                 continue
