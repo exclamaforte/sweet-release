@@ -117,6 +117,7 @@ def main():
         # Open the issue number link in the system default browser
         for issue_number in issue_numbers:
             url = f"https://github.com/pytorch/pytorch/pull/{issue_number}"
+            print(f"Opening {url}")
             webbrowser.open(url)
         # Ask the user to categorize it into one of several predefined classes
         class_name = get_class()
