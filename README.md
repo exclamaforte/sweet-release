@@ -9,6 +9,11 @@ First, it opens the issue up in the browser and asks you to categorize it. Then,
 $ python process.py <input file> <output file> --editor <code editor name>
 ```
 
-Add categories to the `classes` variable in `process.py` file.
+## Example
+```shell
+$ python process.py commits/jan21.txt jan21.md --editor vim
+```
+
+To add categories, check out the `classes` variable in `process.py` file.
 
 Tip: If you open the file in github, you can see the "rendered" version of the output file without needing to install markdown.
