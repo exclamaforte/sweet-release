@@ -1,5 +1,8 @@
 # bc breaking
 # deprecations
+ - Deprecate TORCHINDUCTOR_STACK_ALLOCATION ([#139147](https://github.com/pytorch/pytorch/pull/139147))
+ - Turn on TORCHINDUCTOR_REORDER_FOR_PEAK_MEMORY and remove config ([#137205](https://github.com/pytorch/pytorch/pull/137205))
+ - Remove option for fork-based compile pool ([#142001](https://github.com/pytorch/pytorch/pull/142001))
 # new features
  - Added option to control number of kernel options displayed ([#138788](https://github.com/pytorch/pytorch/pull/138788))
  - pytorch/feature: Record if parallel compile is enabled ([#141074](https://github.com/pytorch/pytorch/pull/141074))
