@@ -1,0 +1,459 @@
+# bc breaking
+ - New interface for `GraphTransformObserver` to enable Node Level provenance tracking. We now track a mapping between the nodes in the pre_grad and post_grad graph. See the issue for an example frontend to visalize the transformations. To update your `GraphTransformObserver` subclasses, instead of overriding `on_node_creation` and `on_node_erase`, there are new functions `get_node_creation_hook`, `get_node_erase_hook`, `get_node_replace_hook` and `get_deepcopy_hook`. These are registered on the `GraphModule` member of the `GraphTransformObserver` upon entry and exit of a with block ([#144277](https://github.com/pytorch/pytorch/pull/144277)).
+- Rename `use_absolute_path` to `use_relative_path` in AOTI. This reflects the option's true purpose: compile a cpp file using its basename instead of the its full path ([#147805](https://github.com/pytorch/pytorch/pull/147805)).
+# deprecations
+ - Drop support for Triton versions without ASTSource (around Triton version 2.2.0) ([#143817](https://github.com/pytorch/pytorch/pull/143817)).
+# new features
+ - Config Fuzzer: This is a new debugging tool designed to fuzz Torch compile configurations. Given a test function, it will identify combinations of configs that throw errors during compilation and execution ([#139736](https://github.com/pytorch/pytorch/pull/139736)) ([#145565](https://github.com/pytorch/pytorch/pull/145565)).
+ - Support fusion of pointwise ops into Template Prologs. Setting `TORCHINDUCTOR_PROLOGUE_FUSION` enables this feature ([#147008](https://github.com/pytorch/pytorch/pull/147008)).
+ - Add instantiation level for generating configs in the CUTLASS backend. Set `TORCHINDUCTOR_CUTLASS_INSTANTIATION_LEVEL`. See config docstring for information ([#146230](https://github.com/pytorch/pytorch/pull/146230)).
+ - Add L2 Swizzle config for CUTLASS backend: `cuda.cutlass_max_profiling_swizzle_options` ([#146088](https://github.com/pytorch/pytorch/pull/146088)).
+ - Support vectorization for score and mask in FlexAttention CPU ([#143638](https://github.com/pytorch/pytorch/pull/143638)).
+ - Emit a CMakeLists.txt when package_cpp_only is specified in AOTI ([#143352](https://github.com/pytorch/pytorch/pull/143352)).
+ - One Dynamo graph can now map to multiple inductor graphs with different `graph_partition` functions. Set the `graph_partition` in inductor config to enable ([#147038](https://github.com/pytorch/pytorch/pull/147038)).
+# improvements
+ - Add profiling support for codegened CPU Flex attention kernels ([#145894](https://github.com/pytorch/pytorch/pull/145894)).
+ - Add Inductor support for non-power-of-2 cooperative RSPLIT ([#145689](https://github.com/pytorch/pytorch/pull/145689)).
+ - Add Cutlass support for runtime param choices, starting with `swizzle` ([#147223](https://github.com/pytorch/pytorch/pull/147223)).
+ - Add FlexAttention kernel parameter tuning options ([#139639](https://github.com/pytorch/pytorch/pull/139639)).
+ - Make Inductor cpp backend enable_floating_point_contract_flag take string. Previously, the only options were "on" or "off". Now the value of `INDUCTOR_CPP_ENABLE_FLOATING_POINT_CONTRACT_FLAG` will be passed to `ffp-contract` ([#143450](https://github.com/pytorch/pytorch/pull/143450)).
+ - Add upcasting FP16/BF16 math reductions to FP32 in Triton ([#141052](https://github.com/pytorch/pytorch/pull/141052)).
+ - Support for more types of async_compile pools. Set variable `TORCHINDUCTOR_WORKER_START` to one of "subprocess", "fork", or "spawn" ([#144491](https://github.com/pytorch/pytorch/pull/144491)).
+ - Create a new benchmarker to replace Triton's `do_bench` ([#133058](https://github.com/pytorch/pytorch/pull/133058)).
+ - Inplace-padding support for cpp-wrapper ([#145325](https://github.com/pytorch/pytorch/pull/145325)).
+ - Enable non power of 2 head_dim for FlexAttention ([#133495](https://github.com/pytorch/pytorch/pull/133495)).
+ - New environment variables for `emulate_precision_casts`: `TORCHINDUCTOR_EMULATE_PRECISION_CASTS` ([#145948](https://github.com/pytorch/pytorch/pull/145948)).
+ - New environment variables to filter cutlass kernels: `TORCHINDUCTOR_CUTLASS_ALLOWLIST` and `TORCHINDUCTOR_CUTLASS_DENYLIST` ([#148161](https://github.com/pytorch/pytorch/pull/148161)).
+ - Add option to disable runtime scalar assertions: `TORCHINDUCTOR_SCALAR_ASSERTS` ([#146462](https://github.com/pytorch/pytorch/pull/146462)).
+ - Add new inductor configs to compiler bisector: `layout_optimization` and `comprehensive_padding` ([#148450](https://github.com/pytorch/pytorch/pull/148450)).
+ - Removed an unnecessarily struct runtime alignment assertion, allowing more flexible usecases of AOTI ([#143236](https://github.com/pytorch/pytorch/pull/143236)).
+ - Support `_int_mm` in AOTI ([#144571](https://github.com/pytorch/pytorch/pull/144571)).
+ - Add an option to skip optimizing generated wrapper code. Set `AOT_INDUCTOR_COMPILE_WRAPPER_WITH_O0=1` ([#144866](https://github.com/pytorch/pytorch/pull/144866)).
+ - Support dynamic shape constraints in Export ([#146044](https://github.com/pytorch/pytorch/pull/146044)).
+ - Handle MLIR scf.yield more accurately in user Triton code ([#147762](https://github.com/pytorch/pytorch/pull/147762)).
+ - Add a global_scratch arg to support Triton 3.3 ([#148051](https://github.com/pytorch/pytorch/pull/148051)).
+ - Support AOTI + CUDAGraphs when calling from Python ([#148601](https://github.com/pytorch/pytorch/pull/148601)).
+# bug fixes
+ - Fix a bug where the options dictionary on torch.compile calls was ignored ([#145131](https://github.com/pytorch/pytorch/pull/145131)).
+ - Inductor now supports nanj in cpp wrapper CPU ([#144064](https://github.com/pytorch/pytorch/pull/144064)).
+ - Fix a bug in the `fractional_max_pool` lowering in Inductor ([#144395](https://github.com/pytorch/pytorch/pull/144395)).
+ - FlexAttention: Fix a few more symbolic shape issues ([#142816](https://github.com/pytorch/pytorch/pull/142816)).
+ - Fix a bug in `associative_scan` ([#143048](https://github.com/pytorch/pytorch/pull/143048)).
+ - Fix the Index Put lowering with same input of self and values ([#139366](https://github.com/pytorch/pytorch/pull/139366)).
+ - Fix a bug in `torch.polygamma(n)` when n == 0 ([#144058](https://github.com/pytorch/pytorch/pull/144058)).
+ - Fix bug in integer `avg_pool` that was causing 0 rounding ([#144059](https://github.com/pytorch/pytorch/pull/144059)).
+ - Change `avg_pool` with `uint` to match eager ([#144313](https://github.com/pytorch/pytorch/pull/144313)).
+ - Fix bug in max-autotune on smaller GPUs (<68 SMs) ([#145133](https://github.com/pytorch/pytorch/pull/145133)).
+ - Fix bug in torch.logit decomposition ([#145576](https://github.com/pytorch/pytorch/pull/145576)).
+ - Fix bug in the strides when lowering custom op ([#148367](https://github.com/pytorch/pytorch/pull/148367)).
+ - Fix bug in AOTI one-pass codegen when max-autotune is turned on ([#143098](https://github.com/pytorch/pytorch/pull/143098)).
+ - Update triton support to account for changes in AttrsDescriptor ([#145051](https://github.com/pytorch/pytorch/pull/145051)) ([#145348](https://github.com/pytorch/pytorch/pull/145348)) ([#145575](https://github.com/pytorch/pytorch/pull/145575)) ([#145583](https://github.com/pytorch/pytorch/pull/145583)) ([#145515](https://github.com/pytorch/pytorch/pull/145515)).
+ - Fix bug where the `benchmark_harness` isn't generated, but is called in some cases ([#145532](https://github.com/pytorch/pytorch/pull/145532)).
+ - Make sure not using cpp wrapper when setting nvtx training annotation ([#145538](https://github.com/pytorch/pytorch/pull/145538)).
+ - Fix a memory leak in package `AOTIModelPackageLoaderPybind::boxed_run` ([#146100](https://github.com/pytorch/pytorch/pull/146100)).
+ - Fix bug where `SVE256` features were run on `SVE128` systems ([#146207](https://github.com/pytorch/pytorch/pull/146207)).
+ - Fix an unaligned memory access issue in `mm_template` ([#146293](https://github.com/pytorch/pytorch/pull/146293)).
+ - Fix intermediate debug information with `cpp_wrapper` ([#145527](https://github.com/pytorch/pytorch/pull/145527)).
+ - Fix bug where inductor was codegen-ing wrong shapes for bucketize when it was fused as an epilogue ([#148769](https://github.com/pytorch/pytorch/pull/148769)).
+# performance
+ - Fuse `SmoothQuant` int8 linear pattern ([#142036](https://github.com/pytorch/pytorch/pull/142036)).
+ - Add torchao da8w8 pattern with symmetric quantized activations and weights ([#142110](https://github.com/pytorch/pytorch/pull/142110)).
+ - Support tiling reduction dimensions: Instead of having a single reduction dimension called "r", we can now support 2D reductions with "r0_" and "r1_" dimensions. 2D reductions generate two nested loops, with different block pointer advancements in each loop body ([#137243](https://github.com/pytorch/pytorch/pull/137243)).
+ - New config to skip L1 cache for single-use buffers in triton codegen ([#143115](https://github.com/pytorch/pytorch/pull/143115)).
+ - Support for Arm Neon and SVE support for FP32 Gemm Wrapper ([#144327](https://github.com/pytorch/pytorch/pull/144327)).
+ - Implement `max_pool2d_with_indices` as a reduction for large window sizes ([#147876](https://github.com/pytorch/pytorch/pull/147876)).
+ - Optimize the heuristics of outer loop fusion in Inductor CPU backend ([#147523](https://github.com/pytorch/pytorch/pull/147523)).
+ - Support parallel reduction for GroupNorm in Inductor CPU backend ([#144020](https://github.com/pytorch/pytorch/pull/144020)).
+ - Add support for online softmax. Online softmax uses a customized reduction to compute max and sum at the same time by accessing the data in one pass ([#127011](https://github.com/pytorch/pytorch/pull/127011)).
+ - Add ROCm specific matmul tuning parameters ([#148437](https://github.com/pytorch/pytorch/pull/148437)).
+ - New GEMM kernel: `persistent_tma` ([#142101](https://github.com/pytorch/pytorch/pull/142101)).
+ - Enable CPP Grouped GEMM Template ([#143796](https://github.com/pytorch/pytorch/pull/143796)).
+ - Auto-tuning support for i8 x i8 -> i32 GEMM kernel on AMX ISA ([#143187](https://github.com/pytorch/pytorch/pull/143187)).
+ - Add new GEMM templates for CPU AVX512: `_weight_int4pack_mm_for_cpu` ([#146756](https://github.com/pytorch/pytorch/pull/146756)).
+# documentation
+ - Spruce up docs for `emulate_precision_casts` ([#145579](https://github.com/pytorch/pytorch/pull/145579)).
+ - Minor fixes to export and AOTI docs ([#144513](https://github.com/pytorch/pytorch/pull/144513)).
+ - Update AOTI tutorial ([#143390](https://github.com/pytorch/pytorch/pull/143390)).
+ - `inductor.config.descriptive_names = False` is no longer a suggested option ([#145523](https://github.com/pytorch/pytorch/pull/145523)).
+# developers
+ - Support for export to unwrap/wrap subclasses AOT, resolves UX issue in torchao where users had to manually unwrap their subclasses before calling export ([#141941](https://github.com/pytorch/pytorch/pull/141941)).
+ - Autotuning logs will now show up in `TORCH_LOG`s under the name "autotuning" ([#147222](https://github.com/pytorch/pytorch/pull/147222)).
+ - Replace `set` by `OrderedSet`: only use OrderedSet in the Inductor codebase ([#138466](https://github.com/pytorch/pytorch/pull/138466)).
+ - Now MPS is considered a `GPU_TYPE` ([#143634](https://github.com/pytorch/pytorch/pull/143634)).
+ - Separate unary post op fusion and lowering for qlinear ([#143903](https://github.com/pytorch/pytorch/pull/143903)).
+ - New classes to help with kernel memory analysis in heuristics ([#142026](https://github.com/pytorch/pytorch/pull/142026)).
+ - Move ir_pre_fusion.txt and ir_post_fusion.txt from `TORCH_COMPILE_DEBUG` to TORCH_LOGS. For example, `TORCH_LOGS="+ir_pre_fusion"` ([#147248](https://github.com/pytorch/pytorch/pull/147248)).
+# not user facing
+ - Improve async workers to handle forking for async compile ([#142072](https://github.com/pytorch/pytorch/pull/142072)).
+ - Include types and size hints in MultiKernel cache key ([#142349](https://github.com/pytorch/pytorch/pull/142349)).
+ - Backout D66648013 ([#143433](https://github.com/pytorch/pytorch/pull/143433)).
+ - Add foreach_map Adam impl to compiled optimizer tests ([#143454](https://github.com/pytorch/pytorch/pull/143454)).
+ - Update NoneAsConstantBuffer to support graph d… ([#143531](https://github.com/pytorch/pytorch/pull/143531)).
+ - Add support for bfloat16 atomic adds in fbcode ([#143629](https://github.com/pytorch/pytorch/pull/143629))
+ - Fix extra warnings brought by clang-tidy-17 ([#143714](https://github.com/pytorch/pytorch/pull/143714))
+ - Improve error message for assert_size_stride ([#143765](https://github.com/pytorch/pytorch/pull/143765))
+ - Make adaptive_max_pool2d error on int64 ([#143762](https://github.com/pytorch/pytorch/pull/143762))
+ - Shorten tracebacks for errors inside inductor (by skipping AOTAutograd frames) ([#143610](https://github.com/pytorch/pytorch/pull/143610))
+ - Add support for atanh(). ([#144121](https://github.com/pytorch/pytorch/pull/144121))
+ - MPS Fix nan propagation for minimum() and maximum() in MPS ([#144086](https://github.com/pytorch/pytorch/pull/144086))
+ - Remove is_reduced_floating_point from namespace std ([#144502](https://github.com/pytorch/pytorch/pull/144502))
+ - Add unbacked symints binding in ShapeProp ([#144605](https://github.com/pytorch/pytorch/pull/144605))
+ - Enable sleef for Win Arm64 ([#144876](https://github.com/pytorch/pytorch/pull/144876))
+ - Add split cat pattern in aten level ([#145721](https://github.com/pytorch/pytorch/pull/145721))
+ - Add select cat aten pass ([#145918](https://github.com/pytorch/pytorch/pull/145918))
+ - Include more corner cases in the select cat aten pass ([#146662](https://github.com/pytorch/pytorch/pull/146662))
+ - Fix for pattern file contains 'getitem' fails during impor… ([#144980](https://github.com/pytorch/pytorch/pull/144980))
+ - Restore search space for swizzle ([#147224](https://github.com/pytorch/pytorch/pull/147224))
+ - triton support port-#5512, update cpp wrapper for gpu ([#146917](https://github.com/pytorch/pytorch/pull/146917))
+ - Fix a corner case in split cat aten pass ([#147784](https://github.com/pytorch/pytorch/pull/147784))
+ - Record input strides at time of tracing, constrain to them for triton fn ([#147861](https://github.com/pytorch/pytorch/pull/147861))
+ - Fix IMA bug ([#147918](https://github.com/pytorch/pytorch/pull/147918))
+ - Generate AOTI input check by default ([#148005](https://github.com/pytorch/pytorch/pull/148005))
+ - Enabled split_scan support for ROCm builds ([#147619](https://github.com/pytorch/pytorch/pull/147619))
+ - Workaround no triton float8_e8m0fnu support in inductor ([#148722](https://github.com/pytorch/pytorch/pull/148722))
+ - replace usages of upload_graph in inductor with tlparse (v2) ([#148720](https://github.com/pytorch/pytorch/pull/148720))
+ - Fix create_specialize_impl error in latest Triton ([#148933](https://github.com/pytorch/pytorch/pull/148933))
+ - Support basic TorchBind in aot_compile and aoti_compile_and_package ([#148506](https://github.com/pytorch/pytorch/pull/148506))
+ - Fix Mask Dtype mismatch ([#142103](https://github.com/pytorch/pytorch/pull/142103))
+ - Support remote caching requiring redis auth ([#141679](https://github.com/pytorch/pytorch/pull/141679))
+ - Refactor "r" reduction prefix to {"r0_", "r1_"}. ([#142020](https://github.com/pytorch/pytorch/pull/142020))
+ - Fix cooperative reduction tests broken in recent refactor ([#143135](https://github.com/pytorch/pytorch/pull/143135))
+ - Add "inductor_pre_grad_graph" logging (#142717) ([#143126](https://github.com/pytorch/pytorch/pull/143126))
+ - Move peak memory pass and overlap pass to be run at the right place ([#142822](https://github.com/pytorch/pytorch/pull/142822))
+ - Optimzing learned bias perf to dq calc ([#142281](https://github.com/pytorch/pytorch/pull/142281))
+ - Fix a test failure in loop_ordering_after_fusion ([#142474](https://github.com/pytorch/pytorch/pull/142474))
+ - Allow num_warps 8 since when block size >=128 ([#143299](https://github.com/pytorch/pytorch/pull/143299))
+ - remove allow-untyped-defs for _inductor/codegen/rocm/rocm_template_buffer.py ([#143272](https://github.com/pytorch/pytorch/pull/143272))
+ - Dedup user-defined Triton kernels by config in codecache ([#143353](https://github.com/pytorch/pytorch/pull/143353))
+ - invalidate pointwise dep cache for LOAF ([#141160](https://github.com/pytorch/pytorch/pull/141160))
+ - cpp_builder: handle CUDA lib paths involving "stubs" in more circumstances ([#142175](https://github.com/pytorch/pytorch/pull/142175))
+ - remove nonowninglayout special case in require strides ([#143315](https://github.com/pytorch/pytorch/pull/143315))
+ - Fix non-dense inductor effn attn bias ([#141905](https://github.com/pytorch/pytorch/pull/141905))
+ - Use process pool for precompilation of triton templates ([#142450](https://github.com/pytorch/pytorch/pull/142450))
+ - Dump inductor_triton_kernel_to_post_grad_nodes.json info in debug_trace ([#143055](https://github.com/pytorch/pytorch/pull/143055))
+ - remove allow-untyped-defs for torch/_inductor/test_operators.py ([#143436](https://github.com/pytorch/pytorch/pull/143436))
+ - Refactor path operations in AotCodeCompiler ([#143350](https://github.com/pytorch/pytorch/pull/143350))
+ - Fix a typo in cpp_builder.py ([#143351](https://github.com/pytorch/pytorch/pull/143351))
+ - move custom pre pass ([#143458](https://github.com/pytorch/pytorch/pull/143458))
+ - disable bernoulli_p decomposition ([#143460](https://github.com/pytorch/pytorch/pull/143460))
+ - Fix bitwise shift with corner inputs ([#143635](https://github.com/pytorch/pytorch/pull/143635))
+ - Fix an unused variable in cpu_vec_isa.py ([#138473](https://github.com/pytorch/pytorch/pull/138473))
+ - Add XPU check for `is_big_gpu()`. ([#143491](https://github.com/pytorch/pytorch/pull/143491))
+ - Reuse partial reductions ([#143600](https://github.com/pytorch/pytorch/pull/143600))
+ - Remove unused <ATen/core/Array.h> inclusion ([#143701](https://github.com/pytorch/pytorch/pull/143701))
+ - Update triton repo link ([#143429](https://github.com/pytorch/pytorch/pull/143429))
+ - Inductor Cutlass backend: Eliminate unused code. ([#143723](https://github.com/pytorch/pytorch/pull/143723))
+ - Fix for extract_target with dots ([#143766](https://github.com/pytorch/pytorch/pull/143766))
+ - fix the `adaptive_avg_pool` on processing int64 ([#143802](https://github.com/pytorch/pytorch/pull/143802))
+ - Reorder imports in codecache.py ([#143813](https://github.com/pytorch/pytorch/pull/143813))
+ - Refactor conditional triton imports into triton_compat.py ([#143814](https://github.com/pytorch/pytorch/pull/143814))
+ - Minor refactor of hip compile_meta ([#143815](https://github.com/pytorch/pytorch/pull/143815))
+ - Move GPUTarget backwards compat to triton_compat.py ([#143818](https://github.com/pytorch/pytorch/pull/143818))
+ - Simplify get_launch_args_* handling ([#143835](https://github.com/pytorch/pytorch/pull/143835))
+ - remove allow-untyped-defs from _inductor/codegen/cpu_device_op_overrides.py ([#143881](https://github.com/pytorch/pytorch/pull/143881))
+ - Support None/int as input/output of invoke_subgraph ([#139373](https://github.com/pytorch/pytorch/pull/139373))
+ - remove allow-untyped-defs from _inductor/codegen/aoti_hipify_utils.py ([#143916](https://github.com/pytorch/pytorch/pull/143916))
+ - remove allow-untyped-defs from _inductor/codegen/rocm/rocm_template_buffer.py ([#143870](https://github.com/pytorch/pytorch/pull/143870))
+ - fix bugs: extra data_ptr() call, wrong size symbol name, bias symbol not added ([#143528](https://github.com/pytorch/pytorch/pull/143528))
+ - fix addmm ([#143537](https://github.com/pytorch/pytorch/pull/143537))
+ - Fix emulate low precision bool inp ([#143657](https://github.com/pytorch/pytorch/pull/143657))
+ - Add MPS device op overrides ([#143892](https://github.com/pytorch/pytorch/pull/143892))
+ - Fix separate in process bisector cache, cleanup on exit ([#143661](https://github.com/pytorch/pytorch/pull/143661))
+ - Fix Data Type issue of frexp ([#143746](https://github.com/pytorch/pytorch/pull/143746))
+ - remove allow-untyped-defs from _inductor/compile_worker/watchdog.py ([#143941](https://github.com/pytorch/pytorch/pull/143941))
+ - cpp_wrapper: minimize pybind11 dependency ([#143772](https://github.com/pytorch/pytorch/pull/143772))
+ - Relax size constraints for re-inplacing ([#143884](https://github.com/pytorch/pytorch/pull/143884))
+ - Not use AOTI_TORCH_CHECK in non AOTI mode. ([#143970](https://github.com/pytorch/pytorch/pull/143970))
+ - MPS: Implement minimum and maximum ops ([#143977](https://github.com/pytorch/pytorch/pull/143977))
+ - MPS: Fix multiple kernel generation ([#143998](https://github.com/pytorch/pytorch/pull/143998))
+ - Add missing py312 xfail ([#144006](https://github.com/pytorch/pytorch/pull/144006))
+ - Fix C++ compile error of torch.max on bool type ([#143848](https://github.com/pytorch/pytorch/pull/143848))
+ - MPS: Preserve dtype during load ([#144051](https://github.com/pytorch/pytorch/pull/144051))
+ - MPS: Fix logical_ops ([#144122](https://github.com/pytorch/pytorch/pull/144122))
+ - don't codegen autotune_at_compile_time for non-Triton kernels ([#143990](https://github.com/pytorch/pytorch/pull/143990))
+ - Generalize tiling algorithm to handle fused reductions ([#144041](https://github.com/pytorch/pytorch/pull/144041))
+ - MPS: Add signbit op support ([#144105](https://github.com/pytorch/pytorch/pull/144105))
+ - Add `constant`, `isinf` and `isnan` ops ([#144156](https://github.com/pytorch/pytorch/pull/144156))
+ - Extend `constant` to bool type ([#144167](https://github.com/pytorch/pytorch/pull/144167))
+ - Add `remainder` op ([#144162](https://github.com/pytorch/pytorch/pull/144162))
+ - Add `floor_div` and `index_expr` implementation ([#144083](https://github.com/pytorch/pytorch/pull/144083))
+ - Add support for log(). ([#144169](https://github.com/pytorch/pytorch/pull/144169))
+ - Add `masked` implementation ([#144084](https://github.com/pytorch/pytorch/pull/144084))
+ - support out_dtype for dequant lowering ([#143845](https://github.com/pytorch/pytorch/pull/143845))
+ - Add types to compile_tasks.py and runtime_utils.py ([#144004](https://github.com/pytorch/pytorch/pull/144004))
+ - Add support for floor(). ([#144195](https://github.com/pytorch/pytorch/pull/144195))
+ - Avoid specializing over symbolic value during constant folding ([#144176](https://github.com/pytorch/pytorch/pull/144176))
+ - Fix E226 flake8 violation ([#144282](https://github.com/pytorch/pytorch/pull/144282))
+ - Add `nan` constant generation ([#144281](https://github.com/pytorch/pytorch/pull/144281))
+ - Fix outer loop fusion buffer removed ([#144243](https://github.com/pytorch/pytorch/pull/144243))
+ - Migrate from Tuple -> tuple in torch/_inductor ([#144264](https://github.com/pytorch/pytorch/pull/144264))
+ - Add support for sign(). ([#144298](https://github.com/pytorch/pytorch/pull/144298))
+ - Add support for rsqrt(). ([#144374](https://github.com/pytorch/pytorch/pull/144374))
+ - Add convolution output size checking to the meta function ([#144225](https://github.com/pytorch/pytorch/pull/144225))
+ - Add support for tanh(). ([#144443](https://github.com/pytorch/pytorch/pull/144443))
+ - Add support for fmod(). ([#144449](https://github.com/pytorch/pytorch/pull/144449))
+ - feature_use: Remove JK from naming for feature use. ([#143529](https://github.com/pytorch/pytorch/pull/143529))
+ - Add instantiation level to CutlassArgs ([#144506](https://github.com/pytorch/pytorch/pull/144506))
+ - ROCM hackfix for segfault in addmm op ([#144519](https://github.com/pytorch/pytorch/pull/144519))
+ - Speedup maximum/minumum ops ([#144581](https://github.com/pytorch/pytorch/pull/144581))
+ - Restrict ND tiling analysis to MemoryDeps ([#144497](https://github.com/pytorch/pytorch/pull/144497))
+ - Add support for trunc(). ([#144629](https://github.com/pytorch/pytorch/pull/144629))
+ - Properly generate index expressions ([#144632](https://github.com/pytorch/pytorch/pull/144632))
+ - Implement bitcasts ([#144638](https://github.com/pytorch/pytorch/pull/144638))
+ - Disable scuba logging for autotuning ([#144568](https://github.com/pytorch/pytorch/pull/144568))
+ - - Implement `check_bounds` ([#144635](https://github.com/pytorch/pytorch/pull/144635))
+ - - Add support for sizevars ([#144662](https://github.com/pytorch/pytorch/pull/144662))
+ - - Add support for truncdiv(). ([#144666](https://github.com/pytorch/pytorch/pull/144666))
+ - - Fix maximum/minimum for int types ([#144665](https://github.com/pytorch/pytorch/pull/144665))
+ - - Add support for `ceil` ([#144715](https://github.com/pytorch/pytorch/pull/144715))
+ - - Add support for `round()` ([#144731](https://github.com/pytorch/pytorch/pull/144731))
+ - - Enable Epilogue Fusion for Grouped GEMM Template ([#143897](https://github.com/pytorch/pytorch/pull/143897))
+ - - skip test_data_type_propagation if triton ([#142054](https://github.com/pytorch/pytorch/pull/142054))
+ - - cexpr the arg before writing to cpp file ([#144714](https://github.com/pytorch/pytorch/pull/144714))
+ - - Separate unary post op fusion and lowering for qconv ([#144312](https://github.com/pytorch/pytorch/pull/144312))
+ - - Add `min`/`max` to MetalExprPrinter ([#144798](https://github.com/pytorch/pytorch/pull/144798))
+ - - Support `abs` in MetalPrintExpr ([#144826](https://github.com/pytorch/pytorch/pull/144826))
+ - - Implement `pow()` ([#144827](https://github.com/pytorch/pytorch/pull/144827))
+ - - don't try/except ImportError for AttrsDescriptor versions ([#144807](https://github.com/pytorch/pytorch/pull/144807))
+ - - Properly convert index ([#144917](https://github.com/pytorch/pytorch/pull/144917))
+ - - Fix codegen regression ([#144924](https://github.com/pytorch/pytorch/pull/144924))
+ - - Separate binary post op fusion and lowering for qconv ([#144318](https://github.com/pytorch/pytorch/pull/144318))
+ - - fix index.Tensor fallback ([#144736](https://github.com/pytorch/pytorch/pull/144736))
+ - - Deduplicate "V.aot_compilation" and "V.graph.aot_mode" flags. ([#144709](https://github.com/pytorch/pytorch/pull/144709))
+ - - FlexAttention: Supports dynamic shapes with custom kernel options ([#144938](https://github.com/pytorch/pytorch/pull/144938))
+ - - Add heuristic to fail block pointer match early ([#144681](https://github.com/pytorch/pytorch/pull/144681))
+ - - Fuzzer Improvements ([#144952](https://github.com/pytorch/pytorch/pull/144952))
+ - - Adding more compile time logging in pad_mm ([#144884](https://github.com/pytorch/pytorch/pull/144884))
+ - - fix TORCH_LOGS="benchmarking" ([#144997](https://github.com/pytorch/pytorch/pull/144997))
+ - - fix test_rng bisector test ([#143662](https://github.com/pytorch/pytorch/pull/143662))
+ - - Refactor CachingAutotuner so that it can pickle ([#144044](https://github.com/pytorch/pytorch/pull/144044))
+ - - PEP585 update - torch/_inductor/fx_passes ([#145107](https://github.com/pytorch/pytorch/pull/145107))
+ - - refactor benchmarking to use dynamo_timed ([#144315](https://github.com/pytorch/pytorch/pull/144315))
+ - - Remove torch.ops.aten._assert_tensor_metadata.default in post_grad_pass ([#145028](https://github.com/pytorch/pytorch/pull/145028))
+ - - PEP585 update - torch/_inductor/codegen ([#145106](https://github.com/pytorch/pytorch/pull/145106))
+ - - Implement `i0` and `i1` ops ([#145092](https://github.com/pytorch/pytorch/pull/145092))
+ - - NaN-propagating min/max to header ([#145157](https://github.com/pytorch/pytorch/pull/145157))
+ - - PEP585 update - torch/_inductor/* ([#145137](https://github.com/pytorch/pytorch/pull/145137))
+ - - Introduce a metal approx for erf() and use it. ([#145161](https://github.com/pytorch/pytorch/pull/145161))
+ - - Add `TrueDiv` and `Round` ([#145160](https://github.com/pytorch/pytorch/pull/145160))
+ - - Deduplicate "V.aot_compilation" and "V.graph.aot_mode" flags. ([#145091](https://github.com/pytorch/pytorch/pull/145091))
+ - - Simplify mode options, only apply CompilerBisector changes once ([#145232](https://github.com/pytorch/pytorch/pull/145232))
+ - - PEP585 update - torch/_inductor ([#145198](https://github.com/pytorch/pytorch/pull/145198))
+ - - Add type annotations to cudagraph_utils.py and test_cases.py ([#145291](https://github.com/pytorch/pytorch/pull/145291))
+ - - Fix test_tma_graph_breaks ([#145271](https://github.com/pytorch/pytorch/pull/145271))
+ - - fix autotuning memory usage ([#145410](https://github.com/pytorch/pytorch/pull/145410))
+ - - Type annotate metrics.py ([#145418](https://github.com/pytorch/pytorch/pull/145418))
+ - - Type annotate pad_mm.py ([#145409](https://github.com/pytorch/pytorch/pull/145409))
+ - - Implement deepcopy for AOTICompiledModel ([#145423](https://github.com/pytorch/pytorch/pull/145423))
+ - - Bail on checking internal overlap when dealing with unbacked symints ([#145385](https://github.com/pytorch/pytorch/pull/145385))
+ - - Inductor cache: Revamp how we handle frozen params ([#143808](https://github.com/pytorch/pytorch/pull/143808))
+ - - cpp_wrapper: Properly handle scalars when input to tensor arguments ([#144910](https://github.com/pytorch/pytorch/pull/144910))
+ - - Don't fail if fresh_inductor_cache fails to clean up its tmp dir. ([#145513](https://github.com/pytorch/pytorch/pull/145513))
+ - - Type annotation for `_inductor/dependencies.py` ([#145311](https://github.com/pytorch/pytorch/pull/145311))
+ - - Add unique identifer to bmm thread_mm functions ([#145303](https://github.com/pytorch/pytorch/pull/145303))
+ - - be able to disable cache for test ([#141195](https://github.com/pytorch/pytorch/pull/141195))
+ - - Add support for `erfinv`. ([#145643](https://github.com/pytorch/pytorch/pull/145643))
+ - - Fix duplicate detection in _dynamic_scale_rblock ([#145577](https://github.com/pytorch/pytorch/pull/145577))
+ - - silence ck package not installed warning when CK backend is not used to autotune bmm ([#145626](https://github.com/pytorch/pytorch/pull/145626))
+ - - Adjust test_log_fp64 to only run when float64 is supported. ([#145686](https://github.com/pytorch/pytorch/pull/145686))
+ - - Add rand support ([#145705](https://github.com/pytorch/pytorch/pull/145705))
+ - - Add some typing to simd.py ([#145690](https://github.com/pytorch/pytorch/pull/145690))
+ - - Add some typing to common.py ([#145691](https://github.com/pytorch/pytorch/pull/145691))
+ - - simplify torch.utils.cpp_extension.include_paths; use it in cpp_builder ([#145480](https://github.com/pytorch/pytorch/pull/145480))
+ - - Change type of get_backend_features to OrderedSet ([#145692](https://github.com/pytorch/pytorch/pull/145692))
+ - - Remove type ignores from scheduler.py ([#145712](https://github.com/pytorch/pytorch/pull/145712))
+ - - Simplify `custom_op` tests ([#145814](https://github.com/pytorch/pytorch/pull/145814))
+ - - Fix crash running wrapper_benchmark with no device ([#145644](https://github.com/pytorch/pytorch/pull/145644))
+ - - fix unbacked + view incorrectness ([#145548](https://github.com/pytorch/pytorch/pull/145548))
+ - - Parallelize epilogue/prologue benchmarking ([#143408](https://github.com/pytorch/pytorch/pull/143408))
+ - - Maintain multiple configs ([#145103](https://github.com/pytorch/pytorch/pull/145103))
+ - - update unbacked symint runtime assertion msg ([#145569](https://github.com/pytorch/pytorch/pull/145569))
+ - - Change propagated dtype for fp16/bf16 unwrapped 0d tensors ([#145613](https://github.com/pytorch/pytorch/pull/145613))
+ - - Make triton kernel autotune config defaults backward-compatible ([#145494](https://github.com/pytorch/pytorch/pull/145494))
+ - - Fix lowering to inductor IR for triton CPU ([#144389](https://github.com/pytorch/pytorch/pull/144389))
+ - - Fix a number of flexattention issues (cse, cudagraph, etc.) ([#145059](https://github.com/pytorch/pytorch/pull/145059))
+ - - Fix handling of fixed XBLOCK larger than xnumel=1 ([#145671](https://github.com/pytorch/pytorch/pull/145671))
+ - - Remove mask_str from IndexingOptions ([#145695](https://github.com/pytorch/pytorch/pull/145695))
+ - - Add some typing to triton.py ([#145688](https://github.com/pytorch/pytorch/pull/145688))
+ - - Type annotate wrapper_benchmark.py and cuda_combined_scheduling.py ([#145542](https://github.com/pytorch/pytorch/pull/145542))
+ - - add inductor_triton_kernel_mapping_post_grad.json to tlparseadd changes ([#145954](https://github.com/pytorch/pytorch/pull/145954))
+ - - Fix signif_strides_equal for symints, dedupe ([#145953](https://github.com/pytorch/pytorch/pull/145953))
+ - - Remove AOTI_USE_CREATE_TENSOR_FROM_BLOB_V1 ([#146039](https://github.com/pytorch/pytorch/pull/146039))
+ - - Fix code cache + freezing compile-time regression ([#145868](https://github.com/pytorch/pytorch/pull/145868))
+ - - Refactor codegen_input_symbol_assignment ([#146043](https://github.com/pytorch/pytorch/pull/146043))
+ - - Cap size of thread pool in select_algorithm to cpu count ([#146071](https://github.com/pytorch/pytorch/pull/146071))
+ - - Adding the best autotuner config ([#146121](https://github.com/pytorch/pytorch/pull/146121))
+ - - Add types to DeviceOpOverrides ([#145913](https://github.com/pytorch/pytorch/pull/145913))
+ - - Combine regexp checks in OpOverrides.paren ([#145914](https://github.com/pytorch/pytorch/pull/145914))
+ - - Add typing to common.OpDecompositions ([#145915](https://github.com/pytorch/pytorch/pull/145915))
+ - - Implement support for polygamma(). ([#146259](https://github.com/pytorch/pytorch/pull/146259))
+ - - Guard a member variable with a define. ([#146278](https://github.com/pytorch/pytorch/pull/146278))
+ - - update try_import_cutlass to accomodate for pip install ([#145891](https://github.com/pytorch/pytorch/pull/145891))
+ - - Add support for digamma(). ([#146292](https://github.com/pytorch/pytorch/pull/146292))
+ - - Add type annotation for autotune_num_choices_displayed ([#146323](https://github.com/pytorch/pytorch/pull/146323))
+ - - Prep change for reduction support ([#146369](https://github.com/pytorch/pytorch/pull/146369))
+ - - Add support for any reduction ([#146370](https://github.com/pytorch/pytorch/pull/146370))
+ - - Add support for `sum` reduction ([#146380](https://github.com/pytorch/pytorch/pull/146380))
+ - - Fix the arguments of `polygamma` ([#146382](https://github.com/pytorch/pytorch/pull/146382))
+ - - Implement `min` and `max` reductions ([#146389](https://github.com/pytorch/pytorch/pull/146389))
+ - - Implement `prod` reduction ([#146396](https://github.com/pytorch/pytorch/pull/146396))
+ - - Implement `argmax`/`argmin` ([#146429](https://github.com/pytorch/pytorch/pull/146429))
+ - - cpp_wrapper/aot_inductor: handle conjugation and negation dispatch keys ([#145095](https://github.com/pytorch/pytorch/pull/145095))
+ - - refactor to reduce libcudart_static logs ([#146394](https://github.com/pytorch/pytorch/pull/146394))
+ - - Support `Tensor(a!)?` ([#145400](https://github.com/pytorch/pytorch/pull/145400))
+ - - Fix min/max for bfloat16 ([#146552](https://github.com/pytorch/pytorch/pull/146552))
+ - - Add a JIT Inductor unit test following #146293 ([#146529](https://github.com/pytorch/pytorch/pull/146529))
+ - - Fix test error test_force_cutlass_backend_aoti_cexpr_codegen ([#146564](https://github.com/pytorch/pytorch/pull/146564))
+ - - Expand inductor codegen dtype asserts, fix scan ([#146067](https://github.com/pytorch/pytorch/pull/146067))
+ - - Check meta strides for expanded dims in effn_attn_bias ([#146054](https://github.com/pytorch/pytorch/pull/146054))
+ - - fuzzer: disable "fail_on_recompile_limit_hit" and "suppress_errors" ([#146650](https://github.com/pytorch/pytorch/pull/146650))
+ - - add size-asserts for fallback ops ([#145904](https://github.com/pytorch/pytorch/pull/145904))
+ - - Use index_dtype (int32/int64 depending on size) for argmax accumulators ([#146651](https://github.com/pytorch/pytorch/pull/146651))
+ - - Better exception error messages for cache_on_self ([#146652](https://github.com/pytorch/pytorch/pull/146652))
+ - - Fix dynamic shapes in max-autotune ([#146657](https://github.com/pytorch/pytorch/pull/146657))
+ - - Fix assertion failure in gemm template lowering ([#146353](https://github.com/pytorch/pytorch/pull/146353))
+ - - Implement Welford reduction ([#146703](https://github.com/pytorch/pytorch/pull/146703))
+ - - Expand Identity ops prior to block pattern matching ([#146000](https://github.com/pytorch/pytorch/pull/146000))
+ - - futher scheduler changes for invoke_quant: prologue low prec, (slightly) more aggressive fusion ([#145104](https://github.com/pytorch/pytorch/pull/145104))
+ - - get rid of the extra printf('\n') ([#146726](https://github.com/pytorch/pytorch/pull/146726))
+ - - use None to slice when list has one element only ([#146638](https://github.com/pytorch/pytorch/pull/146638))
+ - - Make sure cutlass kernel .cu file has configuration name and nvcc compile command ([#146668](https://github.com/pytorch/pytorch/pull/146668))
+ - - Optimize inductor `Self` typing ([#146669](https://github.com/pytorch/pytorch/pull/146669))
+ - - don't promote arg type for cond and while_loop ([#146660](https://github.com/pytorch/pytorch/pull/146660))
+ - - check against arch >= 100 ([#145812](https://github.com/pytorch/pytorch/pull/145812))
+ - - Remove _get_grid_fn_str ([#146800](https://github.com/pytorch/pytorch/pull/146800))
+ - - Only call triton in worker process, kick off worker processes earlier, during inductor codegen ([#146417](https://github.com/pytorch/pytorch/pull/146417))
+ - - Bug fix broken flag ([#146872](https://github.com/pytorch/pytorch/pull/146872))
+ - - Unifiy Low Precision FP Legalization for to_dtype_bitcast & constant ([#144646](https://github.com/pytorch/pytorch/pull/144646))
+ - - skip _test_insignificant_strides on rocm ([#146849](https://github.com/pytorch/pytorch/pull/146849))
+ - - Clear CompiledTritonKernel cache after each inductor compile ([#146925](https://github.com/pytorch/pytorch/pull/146925))
+ - - Fix CUTLASS 2.x kernels for auto-tuning ([#146755](https://github.com/pytorch/pytorch/pull/146755))
+ - - Fix standalone runner for CUTLASS auto-tuning backend ([#146764](https://github.com/pytorch/pytorch/pull/146764))
+ - - Make zero_length sequence handiling better ([#147010](https://github.com/pytorch/pytorch/pull/147010))
+ - - Make _compile_file only used for fbcode ([#147106](https://github.com/pytorch/pytorch/pull/147106))
+ - - Fix a CPP GEMM Template output data type issue ([#146958](https://github.com/pytorch/pytorch/pull/146958))
+ - - torch: Log a unified waitcounter for torch.compile and triton.autotune ([#146723](https://github.com/pytorch/pytorch/pull/146723))
+ - - Fix node name for wgt delete ([#147056](https://github.com/pytorch/pytorch/pull/147056))
+ - - try print stacktrace for error ([#147061](https://github.com/pytorch/pytorch/pull/147061))
+ - - Move _compile_file to cpp_builder ([#147202](https://github.com/pytorch/pytorch/pull/147202))
+ - - Fix the lowering of squeeze when input is not contiguous ([#146746](https://github.com/pytorch/pytorch/pull/146746))
+ - - Don't leak pointers to cpp_wrapper with lru_cache ([#147233](https://github.com/pytorch/pytorch/pull/147233))
+ - - Fix Inplace Buffer inner name conflict ([#147199](https://github.com/pytorch/pytorch/pull/147199))
+ - - Add type annotations to _inductor/utils.py ([#144108](https://github.com/pytorch/pytorch/pull/144108))
+ - - Fix 3D tiling with permute ([#147249](https://github.com/pytorch/pytorch/pull/147249))
+ - - Add the legalize low fp support for index expr ([#147298](https://github.com/pytorch/pytorch/pull/147298))
+ - - Fix the AOTI compile failure with ARM CPU for Meta internal ([#147204](https://github.com/pytorch/pytorch/pull/147204))
+ - - enable SORT and TUPLE_REDUCTION for AMD Triton ([#147340](https://github.com/pytorch/pytorch/pull/147340))
+ - - More precise check for shared storage check in inductor/reinplace pass ([#147050](https://github.com/pytorch/pytorch/pull/147050))
+ - - Fix issues with constant folding and fba_ops ([#146948](https://github.com/pytorch/pytorch/pull/146948))
+ - - Revert "ROCm-specific gemm tuning parameters" ([#147388](https://github.com/pytorch/pytorch/pull/147388))
+ - - Freeze runtime asserts after shape prop but before codegen ([#147331](https://github.com/pytorch/pytorch/pull/147331))
+ - - Fix weird generate stride call in flex decode ([#147435](https://github.com/pytorch/pytorch/pull/147435))
+ - - GraphLowering code movement ([#147335](https://github.com/pytorch/pytorch/pull/147335))
+ - - remove  sysconfig.get_config_var("LIBDIR") from cuda lib paths ([#147409](https://github.com/pytorch/pytorch/pull/147409))
+ - - Add type hints to cuda kernel ([#147471](https://github.com/pytorch/pytorch/pull/147471))
+ - - Do not change dtype of GEMM template for cutlass 3x ([#147434](https://github.com/pytorch/pytorch/pull/147434))
+ - - Add test verifying number of precompiles ([#147477](https://github.com/pytorch/pytorch/pull/147477))
+ - - Fix RuntimeError: value cannot be converted to type int64_t without overflow ([#147492](https://github.com/pytorch/pytorch/pull/147492))
+ - - Optimize `graph.py` typing ([#147099](https://github.com/pytorch/pytorch/pull/147099))
+ - - Add current cuda device index to FXGraphCache key ([#147464](https://github.com/pytorch/pytorch/pull/147464))
+ - - Update meta_registration for efficient attention ([#146979](https://github.com/pytorch/pytorch/pull/146979))
+ - - Use has_triton_package in _inductor.runtime.hints ([#147442](https://github.com/pytorch/pytorch/pull/147442))
+ - - Fix standalone runner test after swizzle became a runtime parameter ([#147554](https://github.com/pytorch/pytorch/pull/147554))
+ - - For addmm and bmm, check if config.autotune_fallback_to_aten before using aten as a fallback. Also fix bmm cutlass backend ([#147148](https://github.com/pytorch/pytorch/pull/147148))
+ - - gfx940 and gfx941 cleanup ([#147394](https://github.com/pytorch/pytorch/pull/147394))
+ - - clear_on_fresh_inductor_cache when generatings cutlass ops ([#147586](https://github.com/pytorch/pytorch/pull/147586))
+ - - Move VNNI weight packing into AMX GEMM kernel for contiguous BMM weights ([#146843](https://github.com/pytorch/pytorch/pull/146843))
+ - - Fix Inductor UT on XPU Windows. ([#146481](https://github.com/pytorch/pytorch/pull/146481))
+ - - Add support for xlog1py. ([#147709](https://github.com/pytorch/pytorch/pull/147709))
+ - - Update should_decompose_mm condition for CPU ([#147673](https://github.com/pytorch/pytorch/pull/147673))
+ - - Suppress multi-line comment warning for XPU. ([#147710](https://github.com/pytorch/pytorch/pull/147710))
+ - - Hot fix after #146917 ([#147639](https://github.com/pytorch/pytorch/pull/147639))
+ - - Update `set_driver_to_gpu` code to avoid backend re-initialization with new Triton ([#147621](https://github.com/pytorch/pytorch/pull/147621))
+ - - Fix the decompositions of torch isin ([#147519](https://github.com/pytorch/pytorch/pull/147519))
+ - - Add input value checking to randint meta function ([#147191](https://github.com/pytorch/pytorch/pull/147191))
+ - - cpp_builder: unbreak clang++ detection ([#147775](https://github.com/pytorch/pytorch/pull/147775))
+ - - Fix import of getArtifactLogger for ir_pre_fusion and ir_post_fusion ([#147560](https://github.com/pytorch/pytorch/pull/147560))
+ - - Unhardedcoded kernel shapes for ck_conv_template codegen ([#147504](https://github.com/pytorch/pytorch/pull/147504))
+ - - Replace run_command_and_check with CppBuilder.build ([#147806](https://github.com/pytorch/pytorch/pull/147806))
+ - - Fix a typo ([#147807](https://github.com/pytorch/pytorch/pull/147807))
+ - - Add toplevel dynamo_compile / tlparse logging for AOTI ([#147760](https://github.com/pytorch/pytorch/pull/147760))
+ - - cpp_wrapper: fix inductor triton tests ([#146109](https://github.com/pytorch/pytorch/pull/146109))
+ - - cpp_wrapper: Fixup output code indentation ([#147215](https://github.com/pytorch/pytorch/pull/147215))
+ - - fix inductor cpp codegen when returning a list of single tensor ([#147649](https://github.com/pytorch/pytorch/pull/147649))
+ - - Update `get_divisible_by_16` function in `test_torchinductor.py` to work correctly with new Triton ([#147865](https://github.com/pytorch/pytorch/pull/147865))
+ - - kBatch parametrized ([#147885](https://github.com/pytorch/pytorch/pull/147885))
+ - - fix store mode atomic add ([#147961](https://github.com/pytorch/pytorch/pull/147961))
+ - - Improve error msg for embedding < 16 ([#147765](https://github.com/pytorch/pytorch/pull/147765))
+ - - Add logs for precompile and autotuning ([#147923](https://github.com/pytorch/pytorch/pull/147923))
+ - - Support add/remove passes in pre_grad ([#146064](https://github.com/pytorch/pytorch/pull/146064))
+ - - turn autotuning logs off by default + rename log to autotuning log ([#147922](https://github.com/pytorch/pytorch/pull/147922))
+ - - Consolidate CppBuilder.build and CppBuilder.build_fbcode ([#147975](https://github.com/pytorch/pytorch/pull/147975))
+ - - cache_clear algorithm select cache on fresh inductor cache ([#147590](https://github.com/pytorch/pytorch/pull/147590))
+ - - Use generic GPU device in test_preserves_strides ([#148006](https://github.com/pytorch/pytorch/pull/148006))
+ - - Add unique kernel name support for user defined triton kernel ([#147587](https://github.com/pytorch/pytorch/pull/147587))
+ - - Skip the logging if the pass cannot be pickled ([#148053](https://github.com/pytorch/pytorch/pull/148053))
+ - - Fix `inductor/test_kernel_benchmark.py` for new Triton; do not duplicate parameters in `_dump_launch_params` ([#147746](https://github.com/pytorch/pytorch/pull/147746))
+ - - kBatch filtering with gen_ops ([#148004](https://github.com/pytorch/pytorch/pull/148004))
+ - - Port fuse_split_getitem_squeeze to PT2 pre_grad passes ([#148059](https://github.com/pytorch/pytorch/pull/148059))
+ - - Move expanded dim require_exact_stride handling to api from sdpa lowering ([#148101](https://github.com/pytorch/pytorch/pull/148101))
+ - - Fix aoti cpp wrapper remaining 5 issue. (following #148051) ([#148117](https://github.com/pytorch/pytorch/pull/148117))
+ - - migrate PYFMT for `torch._inductor` to `ruff format` ([#144550](https://github.com/pytorch/pytorch/pull/144550))
+ - - Check if len(timings) == len(choices) before skipping precompile ([#148050](https://github.com/pytorch/pytorch/pull/148050))
+ - - Sort the list of ops for better repro ([#148047](https://github.com/pytorch/pytorch/pull/148047))
+ - - support mismatched output in inductor ([#147567](https://github.com/pytorch/pytorch/pull/147567))
+ - - relax the constraint that all inputs must be on the same device ([#148019](https://github.com/pytorch/pytorch/pull/148019))
+ - - Fix broken int8 WoQ GEMM AMX implementation in main ([#147895](https://github.com/pytorch/pytorch/pull/147895))
+ - - manual kBatch heuristic ([#148118](https://github.com/pytorch/pytorch/pull/148118))
+ - - ignore block ptr advancements for removed buffers ([#148087](https://github.com/pytorch/pytorch/pull/148087))
+ - - fix `AOTInductorTestABICompatibleGpu.test_triton_kernel_weird_param_order` with new Triton ([#148011](https://github.com/pytorch/pytorch/pull/148011))
+ - - Remove unused functions from `compile_tasks.py` ([#147564](https://github.com/pytorch/pytorch/pull/147564))
+ - - Plumbing to get ShapeAsConstantBuffer from subgraph to main graph output ([#147559](https://github.com/pytorch/pytorch/pull/147559))
+ - - Generalize device-bias code and fix test_graph_partition for XPU ([#148178](https://github.com/pytorch/pytorch/pull/148178))
+ - - Fix None and equal_to_1 arguments issue in Triton kernel generated by AOTI ([#148102](https://github.com/pytorch/pytorch/pull/148102))
+ - - Add transposed B matrix support for CppMicroGemmFP32Vec ([#147068](https://github.com/pytorch/pytorch/pull/147068))
+ - - Fix the vec codegen for tanh ([#148254](https://github.com/pytorch/pytorch/pull/148254))
+ - - Avoid transpose with cpp micro-gemm for FlexAttention ([#147069](https://github.com/pytorch/pytorch/pull/147069))
+ - - If all of the activation scale dims are 1, make it a 0D tensor ([#147033](https://github.com/pytorch/pytorch/pull/147033))
+ - - Hot fix after #148011 ([#148270](https://github.com/pytorch/pytorch/pull/148270))
+ - - Add support for no-op concat with padded output ([#146866](https://github.com/pytorch/pytorch/pull/146866))
+ - - Updates to build rowwise scaled mm kernel on SM10.0a ([#148274](https://github.com/pytorch/pytorch/pull/148274))
+ - - Fix average pool nd for int64 dtype ([#146061](https://github.com/pytorch/pytorch/pull/146061))
+ - - Fix error with FlexibleLayout weights in  BMM ([#148188](https://github.com/pytorch/pytorch/pull/148188))
+ - - dump tuned mm info at lowering stage ([#148363](https://github.com/pytorch/pytorch/pull/148363))
+ - - Fix two small things in cutlass backend standalone debugger ([#148493](https://github.com/pytorch/pytorch/pull/148493))
+ - - Fix aot_inductor_package test errors ([#148279](https://github.com/pytorch/pytorch/pull/148279))
+ - - Fix only logging ir_post_fusion with torch_compile_debug enabled ([#148499](https://github.com/pytorch/pytorch/pull/148499))
+ - - Fix bug in AOTI lowering ([#148364](https://github.com/pytorch/pytorch/pull/148364))
+ - - build CPU CPP kernels at O3, and all other code at O1 ([#148587](https://github.com/pytorch/pytorch/pull/148587))
+ - - add kBatch_sweep to config.rocm ([#148223](https://github.com/pytorch/pytorch/pull/148223))
+ - - Use "ieee" instead of "tf32" for MTIA's default precision in FlexAttention ([#148565](https://github.com/pytorch/pytorch/pull/148565))
+ - - Clear triton kernels after parent make_launcher ([#148604](https://github.com/pytorch/pytorch/pull/148604))
+ - - Fix test_autotune_inplace_kernel to work with newer Triton version ([#148595](https://github.com/pytorch/pytorch/pull/148595))
+ - - cpp_wrapper: reduce memory usage by removing unneeded temporaries ([#147403](https://github.com/pytorch/pytorch/pull/147403))
+ - - follow up to add count info based on shape for inductor `aten.mm`s ([#148623](https://github.com/pytorch/pytorch/pull/148623))
+ - - Add cpp wrapper skip to cudagraph logs ([#148700](https://github.com/pytorch/pytorch/pull/148700))
+ - - enhance the printing for overview info ([#148716](https://github.com/pytorch/pytorch/pull/148716))
+ - - Code Clean: Remove unnecessary code ([#148735](https://github.com/pytorch/pytorch/pull/148735))
+ - - Unload triton pyd files to be able to remove them on Windows. ([#148323](https://github.com/pytorch/pytorch/pull/148323))
+ - - Subprocess compile (attempt 2) ([#148635](https://github.com/pytorch/pytorch/pull/148635))
+ - - Add cu126 inductor jobs and move away cu124 ([#148612](https://github.com/pytorch/pytorch/pull/148612))
+ - - use statically_known_true instead of guard_size_oblivious in pattern matcher ([#147557](https://github.com/pytorch/pytorch/pull/147557))
+ - - Don't clear feedback_saver_fns after cache clear ([#148723](https://github.com/pytorch/pytorch/pull/148723))
+ - - Do not crash when compiling quantized LORA models ([#148435](https://github.com/pytorch/pytorch/pull/148435))
+ - - Wrap log_2_e in tl.constexpr for new 3.3 bump ([#148785](https://github.com/pytorch/pytorch/pull/148785))
+ - - Remove ROCm specific mm gemm template ([#148662](https://github.com/pytorch/pytorch/pull/148662))
+ - - Swith to local cpp compile for fbcode ([#148592](https://github.com/pytorch/pytorch/pull/148592))
+ - - Block ptr analysis fix assert on matched index expression ([#148446](https://github.com/pytorch/pytorch/pull/148446))
+ - - add env_var switch to turn all Windows inductor UTs. ([#148733](https://github.com/pytorch/pytorch/pull/148733))
+ - - codecache.py: use str.format rather than % formatting ([#148691](https://github.com/pytorch/pytorch/pull/148691))
+ - - Update flexattention bwd config generation ([#148600](https://github.com/pytorch/pytorch/pull/148600))
+ - - support num_heads > 1 in block_mask ([#148857](https://github.com/pytorch/pytorch/pull/148857))
+ - - Add sm carevout to lowerings ([#148793](https://github.com/pytorch/pytorch/pull/148793))
+ - - Update the comment ([#148726](https://github.com/pytorch/pytorch/pull/148726))
+ - - Don't look at TESTING_ONLY in fuzzer ([#146870](https://github.com/pytorch/pytorch/pull/146870))
+ - - Forward-fix mm template selection logic ([#148924](https://github.com/pytorch/pytorch/pull/148924))
+ - - Prep for mutlistage reductions ([#148969](https://github.com/pytorch/pytorch/pull/148969))
+ - TODO remove Make Inductor scheduler aware of _scaled_mm ([#146992](https://github.com/pytorch/pytorch/pull/146992))
+# Untopiced (not relevant to inductor)
+ - - Export: Fix torchbind constant folding ([#144684](https://github.com/pytorch/pytorch/pull/144684))

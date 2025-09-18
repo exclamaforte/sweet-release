@@ -9,14 +9,19 @@ import os
 classes = {
     'b': 'bc breaking',
     'd': 'deprecations',
-    'n': 'new features',
+    'N': 'new features',
     'i': 'improvements',
     'u': 'bug fixes',
     'p': 'performance',
     'D': 'documentation',
     'e': 'developers',
-    'N': 'not user facing',
-    'T': 'Untopiced (not relevant to inductor)'
+    'n': 'not user facing',
+    'T': 'Untopiced (not relevant to inductor)',
+    'a': 'AOTI',
+    'c': 'Cutlass',
+    'f': 'Flex Attention',
+    'm': 'MPS',
+    'x': 'XPU',
     # Add new classes here, e.g., 'n': 'New Class'
 }
 
@@ -28,7 +33,7 @@ def process_line(line):
     # Find the issue numbers
     issue_numbers = re.findall(r'\(#(\d+)\)', line)
     # Remove the issue numbers from the line
-    line = re.sub(r'\(#\d+\)', '', line)
+    line = re.sub(r'\(\[#\d+\]\(.+\)\)', '', line)
     return line.strip(), issue_numbers
 
 def get_class():
@@ -102,23 +107,37 @@ def main():
         print("File not found.")
         return
     existing_issue_numbers = set()
+    skipping = False
     for lines in data.values():
         for line in lines:
             issue_numbers = re.findall(r'\[#(\d+)\]', line)
             existing_issue_numbers.update(issue_numbers)
     for line in commits:
+        print(f"Processing line {commits.index(line) + 1}/{len(commits)} ({(commits.index(line) + 1) / len(commits) * 100:.2f}%)")
+        print(f"Line: {line}")
         processed_line, issue_numbers = process_line(line)
         if any(issue_number in existing_issue_numbers for issue_number in issue_numbers):
             if args.skip:
                 continue
-            response = input(f"Issue number(s) {', '.join(issue_numbers)} already exist in the output file. Do you want to skip this line? (y/n): ")
-            if response.lower() == 'y':
+            if not skipping:
+                response = input(f"Issue number(s) {', '.join(issue_numbers)} already exist in the output file. Do you want to skip this line? (y/n/Y): ")
+                if response == 'y':
+                    continue
+                elif response == 'Y':
+                    skipping = True
+                    continue
+            else:
                 continue
         # Open the issue number link in the system default browser
+        if not issue_numbers:
+            print(f"No issue numbers found in line {line}. Skipping.")
+            breakpoint()
         for issue_number in issue_numbers:
             url = f"https://github.com/pytorch/pytorch/pull/{issue_number}"
-            print(f"Opening {url}")
+            files_url = f"https://github.com/pytorch/pytorch/pull/{issue_number}/files"
+            print(f"Opening {url} and {files_url}")
             webbrowser.open(url)
+            webbrowser.open(files_url)
         # Ask the user to categorize it into one of several predefined classes
         class_name = get_class()
         # remove the squares
