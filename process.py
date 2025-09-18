@@ -1,40 +1,44 @@
+import os
 import re
-import webbrowser
 import readline
-import tempfile
 import subprocess
 import sys
-import os
+import tempfile
+import webbrowser
+
 # Predefined classes with their corresponding single letter hotkeys
 classes = {
-    'b': 'bc breaking',
-    'd': 'deprecations',
-    'N': 'new features',
-    'i': 'improvements',
-    'u': 'bug fixes',
-    'p': 'performance',
-    'D': 'documentation',
-    'e': 'developers',
-    'n': 'not user facing',
-    'T': 'Untopiced (not relevant to inductor)',
-    'a': 'AOTI',
-    'c': 'Cutlass',
-    'f': 'Flex Attention',
-    'm': 'MPS',
-    'x': 'XPU',
+    "b": "bc breaking",
+    "d": "deprecations",
+    "N": "new features",
+    "i": "improvements",
+    "u": "bug fixes",
+    "p": "performance",
+    "D": "documentation",
+    "e": "developers",
+    "n": "not user facing",
+    "T": "Untopiced (not relevant to inductor)",
+    "a": "AOTI",
+    "c": "Cutlass",
+    "f": "Flex Attention",
+    "m": "MPS",
+    "x": "XPU",
     # Add new classes here, e.g., 'n': 'New Class'
 }
 
+
 def remove_square(line):
     # Remove anything at the start that is contained within square brackets
-    return re.sub(r'\[.*?\]\s*', '', line)
+    return re.sub(r"\[.*?\]\s*", "", line)
+
 
 def process_line(line):
     # Find the issue numbers
-    issue_numbers = re.findall(r'\(#(\d+)\)', line)
+    issue_numbers = re.findall(r"\(\[#(\d+)\]\(.*?\)\)", line)
     # Remove the issue numbers from the line
-    line = re.sub(r'\(\[#\d+\]\(.+\)\)', '', line)
+    line = re.sub(r"\(\[#\d+\]\(.*?\)\)", "", line)
     return line.strip(), issue_numbers
+
 
 def get_class():
     print("Select a class:")
@@ -47,41 +51,58 @@ def get_class():
         else:
             print("Invalid choice. Please try again.")
 
-def rewrite_line(line, editor='vim'):
-    with tempfile.NamedTemporaryFile(mode='w') as tmp_file:
+
+def rewrite_line(line, editor="vim"):
+    with tempfile.NamedTemporaryFile(mode="w") as tmp_file:
         tmp_file.write(line)
         tmp_file.flush()
         subprocess.run([editor, tmp_file.name])
-        with open(tmp_file.name, 'r') as f:
+        with open(tmp_file.name, "r") as f:
             return f.read().strip()
 
+
 def save_to_file(file_name, data):
-    with open(file_name, 'w') as f:
+    with open(file_name, "w") as f:
         for class_name, lines in data.items():
             f.write(f"# {class_name}\n")
             for line in lines:
                 f.write(f" - {line}\n")
 
+
 def load_from_file(file_name):
     data = {}
     current_class = None
-    with open(file_name, 'r') as f:
+    with open(file_name, "r") as f:
         for line in f.readlines():
             line = line.strip()
-            if line.startswith('#'):
+            if line.startswith("#"):
                 current_class = line[2:]
                 data[current_class] = []
-            elif line.startswith('-'):
+            elif line.startswith("-"):
                 data[current_class].append(line[2:])
     return data
 
+
 def main():
     import argparse
-    parser = argparse.ArgumentParser(description='Process commits')
-    parser.add_argument('input_file', nargs='?', help='Input file containing the list of commits')
-    parser.add_argument('output_file', nargs='?', help='Output file name')
-    parser.add_argument('-e', '--editor', default='vim', help='Editor to use for rewriting commit messages')
-    parser.add_argument('-s', '--skip', help='Whether or not to skip ', action=argparse.BooleanOptionalAction)
+
+    parser = argparse.ArgumentParser(description="Process commits")
+    parser.add_argument(
+        "input_file", nargs="?", help="Input file containing the list of commits"
+    )
+    parser.add_argument("output_file", nargs="?", help="Output file name")
+    parser.add_argument(
+        "-e",
+        "--editor",
+        default="vim",
+        help="Editor to use for rewriting commit messages",
+    )
+    parser.add_argument(
+        "-s",
+        "--skip",
+        help="Whether or not to skip ",
+        action=argparse.BooleanOptionalAction,
+    )
     args = parser.parse_args()
     if not args.input_file:
         args.input_file = input("Enter a file name containing the list of commits: ")
@@ -89,8 +110,10 @@ def main():
         args.output_file = input("Enter an output file name: ")
     resume = False
     if os.path.exists(args.output_file):
-        response = input(f"Output file '{args.output_file}' already exists. Do you want to resume from it? (y/n): ")
-        if response.lower() == 'y':
+        response = input(
+            f"Output file '{args.output_file}' already exists. Do you want to resume from it? (y/n): "
+        )
+        if response.lower() == "y":
             resume = True
     if resume:
         try:
@@ -101,7 +124,7 @@ def main():
     else:
         data = {class_name: [] for class_name in classes.values()}
     try:
-        with open(args.input_file, 'r') as f:
+        with open(args.input_file, "r") as f:
             commits = [line.strip() for line in f.readlines()]
     except FileNotFoundError:
         print("File not found.")
@@ -110,20 +133,26 @@ def main():
     skipping = False
     for lines in data.values():
         for line in lines:
-            issue_numbers = re.findall(r'\[#(\d+)\]', line)
+            issue_numbers = re.findall(r"\[#(\d+)\]", line)
             existing_issue_numbers.update(issue_numbers)
     for line in commits:
-        print(f"Processing line {commits.index(line) + 1}/{len(commits)} ({(commits.index(line) + 1) / len(commits) * 100:.2f}%)")
+        print(
+            f"Processing line {commits.index(line) + 1}/{len(commits)} ({(commits.index(line) + 1) / len(commits) * 100:.2f}%)"
+        )
         print(f"Line: {line}")
         processed_line, issue_numbers = process_line(line)
-        if any(issue_number in existing_issue_numbers for issue_number in issue_numbers):
+        if any(
+            issue_number in existing_issue_numbers for issue_number in issue_numbers
+        ):
             if args.skip:
                 continue
             if not skipping:
-                response = input(f"Issue number(s) {', '.join(issue_numbers)} already exist in the output file. Do you want to skip this line? (y/n/Y): ")
-                if response == 'y':
+                response = input(
+                    f"Issue number(s) {', '.join(issue_numbers)} already exist in the output file. Do you want to skip this line? (y/n/Y): "
+                )
+                if response == "y":
                     continue
-                elif response == 'Y':
+                elif response == "Y":
                     skipping = True
                     continue
             else:
@@ -131,7 +160,6 @@ def main():
         # Open the issue number link in the system default browser
         if not issue_numbers:
             print(f"No issue numbers found in line {line}. Skipping.")
-            breakpoint()
         for issue_number in issue_numbers:
             url = f"https://github.com/pytorch/pytorch/pull/{issue_number}"
             files_url = f"https://github.com/pytorch/pytorch/pull/{issue_number}/files"
@@ -145,13 +173,17 @@ def main():
         # Rewrite the line if desired
         rewritten_line = rewrite_line(processed_line, editor=args.editor)
         # Format the link to the issues
-        links = ' '.join(f"([#{issue_number}](https://github.com/pytorch/pytorch/pull/{issue_number}))" for issue_number in issue_numbers)
+        links = " ".join(
+            f"([#{issue_number}](https://github.com/pytorch/pytorch/pull/{issue_number}))"
+            for issue_number in issue_numbers
+        )
         final_line = f"{rewritten_line} {links}"
         # Save the file state to the output file every iteration
         if class_name not in data:
             data[class_name] = []
         data[class_name].append(final_line)
         save_to_file(args.output_file, data)
+
 
 if __name__ == "__main__":
     main()
